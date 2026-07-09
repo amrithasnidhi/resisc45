@@ -47,7 +47,7 @@ from utils import (
 )
 
 
-# Maps experiment → which branch-A backbone cache key
+# Maps experiment -> which branch-A backbone cache key
 BRANCH_A_CACHE = {
     'E11': 'mobilevit_s',
     'E12': 'mobilevit_s',
@@ -56,18 +56,18 @@ BRANCH_A_CACHE = {
 }
 
 ARCH_NOTES = {
-    'E11': ('MobileViT-S (frozen, 4.94M) → Branch A feats\n'
-            'ResNet-18 + 4Q PQC (StronglyEntangling, 2L) → Branch B\n'
-            'Fusion: Concatenation (640+4=644) → Linear(644,128) → Linear(128,45)'),
-    'E12': ('MobileViT-S (frozen, 4.94M) → Branch A feats\n'
-            'ResNet-18 + 4Q PQC → Branch B\n'
-            'Fusion: Cross-Attention (Q=quantum, K=V=CNN, dim=128) + LayerNorm → Linear(128,45)'),
-    'E13': ('DenseNet-121 (frozen, 6.96M) → Branch A feats\n'
-            'MobileViT-S + 4Q PQC → Branch B\n'
-            'Fusion: Multi-Head Cross-Attention (4 heads, dim=256) + LayerNorm → Linear(256,45)'),
-    'E14': ('DenseNet-121 (frozen, 6.96M) → Branch A feats\n'
-            'MobileViT-S + 4Q PQC → Branch B\n'
-            'Fusion: Concatenation (1024+4=1028) → Linear(1028,256) → Linear(256,45)'),
+    'E11': ('MobileViT-S (frozen, 4.94M) -> Branch A feats\n'
+            'ResNet-18 + 4Q PQC (StronglyEntangling, 2L) -> Branch B\n'
+            'Fusion: Concatenation (640+4=644) -> Linear(644,128) -> Linear(128,45)'),
+    'E12': ('MobileViT-S (frozen, 4.94M) -> Branch A feats\n'
+            'ResNet-18 + 4Q PQC -> Branch B\n'
+            'Fusion: Cross-Attention (Q=quantum, K=V=CNN, dim=128) + LayerNorm -> Linear(128,45)'),
+    'E13': ('DenseNet-121 (frozen, 6.96M) -> Branch A feats\n'
+            'MobileViT-S + 4Q PQC -> Branch B\n'
+            'Fusion: Multi-Head Cross-Attention (4 heads, dim=256) + LayerNorm -> Linear(256,45)'),
+    'E14': ('DenseNet-121 (frozen, 6.96M) -> Branch A feats\n'
+            'MobileViT-S + 4Q PQC -> Branch B\n'
+            'Fusion: Concatenation (1024+4=1028) -> Linear(1028,256) -> Linear(256,45)'),
 }
 
 MODEL_NAME_MAP = {
@@ -143,7 +143,7 @@ def _load_cache_split(experiment, split, use_cache, device=DEVICE):
         feats, _ = load_cached_feats(bname, split, device)
         return feats
     except FileNotFoundError as e:
-        print(f"\n⚠ {e}")
+        print(f"\n[WARN] {e}")
         print("  Falling back to live inference (slower).\n")
         return None
 
@@ -163,7 +163,7 @@ def run_stage(model, stage, train_loader, val_loader,
     best_val    = 0.0
     epoch_count = 0
 
-    print(f"\n─── Stage {stage} | lr={lr:.0e} | epochs≤{n_epochs} ───")
+    print(f"\n--- Stage {stage} | lr={lr:.0e} | epochs<={n_epochs} ---")
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"    Trainable params: {trainable:,}")
 
@@ -232,7 +232,7 @@ def main():
     print(f"  Cache B-A  : {use_cache}")
     print(f"{'='*60}\n")
 
-    # ── Data ──────────────────────────────────────────────────────────────────
+    # -- Data ------------------------------------------------------------------
     train_loader, val_loader, test_loader = get_loaders(
         data_dir   = args.data_dir,
         img_size   = IMG_SIZE,
@@ -244,7 +244,7 @@ def main():
           f"Val: {len(val_loader.dataset)} | "
           f"Test: {len(test_loader.dataset)}")
 
-    # ── Branch-A feature cache ─────────────────────────────────────────────────
+    # -- Branch-A feature cache -------------------------------------------------
     cache_train = _load_cache_split(exp, 'train', use_cache)
     cache_val   = _load_cache_split(exp, 'val',   use_cache)
     cache_test  = _load_cache_split(exp, 'test',  use_cache)
@@ -253,7 +253,7 @@ def main():
         print(f"Branch-A cache loaded: train={cache_train.shape}, "
               f"val={cache_val.shape}, test={cache_test.shape}")
 
-    # ── Model ─────────────────────────────────────────────────────────────────
+    # -- Model -----------------------------------------------------------------
     ModelClass = FUSION_MODELS[exp]
     if exp == 'E13':
         model = ModelClass(n_qubits=args.qubits, n_heads=args.num_heads)
@@ -268,7 +268,7 @@ def main():
     logger    = CSVLogger(model_name, dataset)
     t0        = time.time()
 
-    # ── Stage 1 ───────────────────────────────────────────────────────────────
+    # -- Stage 1 ---------------------------------------------------------------
     best_s1, n_s1, offset = run_stage(
         model, 1, train_loader, val_loader,
         s1, LR_FUSION_S1, criterion, logger, dataset,
@@ -278,7 +278,7 @@ def main():
         model_name=model_name,
     )
 
-    # ── Stage 2 ───────────────────────────────────────────────────────────────
+    # -- Stage 2 ---------------------------------------------------------------
     best_s2, n_s2, offset = run_stage(
         model, 2, train_loader, val_loader,
         s2, LR_FUSION_S2, criterion, logger, dataset,
@@ -288,7 +288,7 @@ def main():
         model_name=model_name,
     )
 
-    # ── Stage 3 ───────────────────────────────────────────────────────────────
+    # -- Stage 3 ---------------------------------------------------------------
     best_s3, n_s3, _ = run_stage(
         model, 3, train_loader, val_loader,
         s3, LR_FUSION_S3, criterion, logger, dataset,
@@ -302,7 +302,7 @@ def main():
     total_time = time.time() - t0
     print(f"\nAll stages done in {total_time/3600:.2f} h")
 
-    # ── Test evaluation ───────────────────────────────────────────────────────
+    # -- Test evaluation -------------------------------------------------------
     print("\nLoading best checkpoint for test evaluation …")
     ckpt_path = Path('results/checkpoints') / f"{model_name}_{dataset}_best.pth"
     if ckpt_path.exists():
@@ -319,7 +319,7 @@ def main():
     print(f"F1-Score      : {metrics['f1']:.2f}%")
     print(f"Cohen Kappa   : {metrics['kappa']:.4f}")
 
-    # ── Save outputs ──────────────────────────────────────────────────────────
+    # -- Save outputs ----------------------------------------------------------
     save_classification_report(preds, labels, class_names, model_name, dataset)
     save_confusion_matrix(preds, labels, class_names, model_name, dataset)
     save_model_report(

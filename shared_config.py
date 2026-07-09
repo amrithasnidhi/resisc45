@@ -4,12 +4,12 @@
 import torch
 from pathlib import Path
 
-# ── Device ──────────────────────────────────────────────────────────────────
+# -- Device ------------------------------------------------------------------
 # Intel Iris Xe is integrated GPU sharing system RAM — no CUDA support.
 # All training runs on CPU.
 DEVICE = torch.device('cpu')
 
-# ── Paths ────────────────────────────────────────────────────────────────────
+# -- Paths --------------------------------------------------------------------
 DATA_DIR        = Path('data/NWPU-RESISC45')
 RESULTS_DIR     = Path('results')
 CHECKPOINT_DIR  = RESULTS_DIR / 'checkpoints'
@@ -21,9 +21,9 @@ CACHE_DIR       = RESULTS_DIR / 'feature_cache'
 for _d in [CHECKPOINT_DIR, METRICS_DIR, CM_DIR, REPORT_DIR, CACHE_DIR]:
     _d.mkdir(parents=True, exist_ok=True)
 
-# ── Dataset ──────────────────────────────────────────────────────────────────
+# -- Dataset ------------------------------------------------------------------
 NUM_CLASSES = 45
-IMG_SIZE    = 64        # All models accept 64×64 input
+IMG_SIZE    = 64        # All models accept 64x64 input
 BACKBONE_SIZE = 224     # Pretrained backbones resized internally to this
 
 RESISC45_CLASSES = [
@@ -44,7 +44,7 @@ VAL_RATIO   = 0.15
 TEST_RATIO  = 0.15
 SEED        = 42
 
-# ── DataLoader ───────────────────────────────────────────────────────────────
+# -- DataLoader ---------------------------------------------------------------
 # num_workers=0 avoids Windows multiprocessing spawn issues on CPU
 NUM_WORKERS = 0
 PIN_MEMORY  = False     # Only meaningful with CUDA
@@ -53,7 +53,7 @@ PIN_MEMORY  = False     # Only meaningful with CUDA
 QUANTUM_BATCH_SIZE = 8   # Small: quantum circuits serialize per batch
 FUSION_BATCH_SIZE  = 16  # Moderate: backbone features cached to avoid OOM
 
-# ── Training epochs (adapted from guide for CPU speed) ───────────────────────
+# -- Training epochs (adapted from guide for CPU speed) -----------------------
 # Guide default: Quantum=30, Fusion=65 (GPU-assumed)
 # CPU default: Quantum=20, Fusion=35 (5+25+5 stages)
 QUANTUM_EPOCHS        = 20
@@ -62,13 +62,13 @@ FUSION_STAGE2_EPOCHS  = 25  # Joint fine-tune (early stop patience=8)
 FUSION_STAGE3_EPOCHS  = 5   # Low-LR final polish
 EARLY_STOP_PATIENCE   = 8
 
-# ── Learning rates ────────────────────────────────────────────────────────────
+# -- Learning rates ------------------------------------------------------------
 LR_QUANTUM    = 1e-3
 LR_FUSION_S1  = 1e-3    # Stage 1: head only
 LR_FUSION_S2  = 1e-4    # Stage 2: joint fine-tune
 LR_FUSION_S3  = 1e-5    # Stage 3: final polish
 
-# ── Quantum ───────────────────────────────────────────────────────────────────
+# -- Quantum -------------------------------------------------------------------
 N_QUBITS = 4
 
 # Pick fastest available PennyLane backend for CPU

@@ -81,7 +81,7 @@ def main():
     print(f"  Device  : {DEVICE}")
     print(f"{'='*60}\n")
 
-    # ── Data ──────────────────────────────────────────────────────────────────
+    # -- Data ------------------------------------------------------------------
     train_loader, val_loader, test_loader = get_loaders(
         data_dir   = args.data_dir,
         img_size   = IMG_SIZE,
@@ -93,7 +93,7 @@ def main():
           f"Val: {len(val_loader.dataset)} | "
           f"Test: {len(test_loader.dataset)}")
 
-    # ── Model ─────────────────────────────────────────────────────────────────
+    # -- Model -----------------------------------------------------------------
     ModelClass = QUANTUM_MODELS[args.model]
     if args.model == 'Q3_DataReupload':
         model = ModelClass(n_qubits=args.qubits, n_layers=3)
@@ -104,21 +104,21 @@ def main():
     n_params = count_parameters(model)
     print(f"Trainable parameters: {n_params:,}\n")
 
-    # ── Optimizer & loss ──────────────────────────────────────────────────────
+    # -- Optimizer & loss ------------------------------------------------------
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='max', factor=0.5, patience=5, verbose=True
     )
     criterion = nn.CrossEntropyLoss()
 
-    # ── Resume ────────────────────────────────────────────────────────────────
+    # -- Resume ----------------------------------------------------------------
     start_epoch = 0
     best_val_acc = 0.0
     if args.resume:
         start_epoch, best_val_acc = load_checkpoint(model, args.resume, DEVICE)
         print(f"Resumed from epoch {start_epoch}, best val acc: {best_val_acc:.2f}%")
 
-    # ── Training ──────────────────────────────────────────────────────────────
+    # -- Training --------------------------------------------------------------
     logger       = CSVLogger(args.model, dataset)
     early_stop   = EarlyStopping(patience=10)   # More patience for quantum models
     t0           = time.time()
@@ -144,7 +144,7 @@ def main():
             best_val_acc = vl_acc
             ckpt = save_checkpoint(model, optimizer, epoch, vl_acc,
                                    args.model, dataset)
-            print(f"  ✓ Saved best checkpoint  (val_acc={vl_acc:.2f}%)")
+            print(f"  [OK] Saved best checkpoint  (val_acc={vl_acc:.2f}%)")
 
         if early_stop.step(vl_acc):
             print(f"\nEarly stopping at epoch {epoch}.")
@@ -154,7 +154,7 @@ def main():
     total_time = time.time() - t0
     print(f"\nTraining done in {total_time/3600:.2f} h")
 
-    # ── Evaluation on test set ────────────────────────────────────────────────
+    # -- Evaluation on test set ------------------------------------------------
     print("\nLoading best checkpoint for test evaluation …")
     ckpt_path = Path('results/checkpoints') / f"{args.model}_{dataset}_best.pth"
     if ckpt_path.exists():
@@ -169,14 +169,14 @@ def main():
     print(f"F1-Score      : {metrics['f1']:.2f}%")
     print(f"Cohen Kappa   : {metrics['kappa']:.4f}")
 
-    # ── Save outputs ──────────────────────────────────────────────────────────
+    # -- Save outputs ----------------------------------------------------------
     save_classification_report(preds, labels, class_names, args.model, dataset)
     save_confusion_matrix(preds, labels, class_names, args.model, dataset)
 
     arch_map = {
-        'Q1_QNN4EO':       'LeNet-style CNN → 4 angles → AngleEmbedding + StronglyEntanglingLayers (2L) → Linear(4,45)',
-        'Q2_AngleSEL':     'Quadrant CNN (×4, shared) → per-quadrant PQC → Cross-Attention fusion → Linear(16,45)',
-        'Q3_DataReupload': 'CNN encoder → 4 angles → Data-Reuploading circuit (3L, ring-CNOT, RY/RZ) → Linear(4,45)',
+        'Q1_QNN4EO':       'LeNet-style CNN -> 4 angles -> AngleEmbedding + StronglyEntanglingLayers (2L) -> Linear(4,45)',
+        'Q2_AngleSEL':     'Quadrant CNN (x4, shared) -> per-quadrant PQC -> Cross-Attention fusion -> Linear(16,45)',
+        'Q3_DataReupload': 'CNN encoder -> 4 angles -> Data-Reuploading circuit (3L, ring-CNOT, RY/RZ) -> Linear(4,45)',
     }
     save_model_report(
         model_name  = args.model,

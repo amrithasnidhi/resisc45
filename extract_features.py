@@ -3,7 +3,7 @@ Pre-extract and cache frozen Branch-A backbone features for fusion models.
 
 This is critical for CPU training speed on i5-1335U:
   - Without caching: MobileViT-S/DenseNet-121 forward pass every batch (~5-10 min/epoch)
-  - With caching: run backbone ONCE → save to disk → load tensors each epoch (~seconds)
+  - With caching: run backbone ONCE -> save to disk -> load tensors each epoch (~seconds)
 
 Run this ONCE before train_fusion.py:
     python extract_features.py --experiment E11   # caches MobileViT-S features
@@ -73,7 +73,7 @@ def extract_and_save(experiment: str, data_dir=DATA_DIR, seed=SEED):
         for split in ['train', 'val', 'test']
     )
     if needed:
-        print(f"  ✓ Already cached – skipping.")
+        print(f"  [OK] Already cached – skipping.")
         return
 
     # Load datasets (eval transform only – no augmentation for caching)
@@ -106,7 +106,7 @@ def extract_and_save(experiment: str, data_dir=DATA_DIR, seed=SEED):
     for split_name, subset in splits.items():
         cache_path = CACHE_DIR / f"{cache_key}_{split_name}.pt"
         if cache_path.exists():
-            print(f"  ✓ {split_name}: already exists")
+            print(f"  [OK] {split_name}: already exists")
             continue
 
         loader = DataLoader(subset, batch_size=32, shuffle=False,
@@ -130,7 +130,7 @@ def extract_and_save(experiment: str, data_dir=DATA_DIR, seed=SEED):
 
         torch.save({'feats': feats_tensor, 'labels': labels_tensor}, cache_path)
         elapsed = time.time() - t0
-        print(f" done in {elapsed:.1f}s  → {cache_path.name}")
+        print(f" done in {elapsed:.1f}s  -> {cache_path.name}")
 
     print(f"  [OK] {backbone_name} features cached.\n")
 
@@ -170,7 +170,7 @@ def main():
     for exp in targets:
         bname = BACKBONE_MAP[exp]
         if bname in done:
-            print(f"[{exp}] Shares cache with earlier extraction → skip")
+            print(f"[{exp}] Shares cache with earlier extraction -> skip")
             continue
         extract_and_save(exp, args.data_dir, args.seed)
         done.add(bname)

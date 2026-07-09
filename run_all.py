@@ -33,7 +33,7 @@ def run_cmd(cmd: list[str], label: str) -> bool:
     t0 = time.time()
     result = subprocess.run(cmd, check=False)
     elapsed = time.time() - t0
-    status  = "✓ SUCCESS" if result.returncode == 0 else "✗ FAILED"
+    status  = "[OK] SUCCESS" if result.returncode == 0 else "[FAIL] FAILED"
     print(f"\n{status}: {label}  ({elapsed/3600:.2f} h)\n")
     return result.returncode == 0
 
@@ -57,7 +57,7 @@ def main():
     results  = {}
     t_total  = time.time()
 
-    # ── Feature extraction for fusion models ──────────────────────────────────
+    # -- Feature extraction for fusion models ----------------------------------
     if not args.skip_fusion and not args.skip_extract:
         ok = run_cmd(
             [py, 'extract_features.py', '--all', '--data-dir', args.data_dir],
@@ -65,7 +65,7 @@ def main():
         )
         results['extract'] = ok
 
-    # ── Quantum models ────────────────────────────────────────────────────────
+    # -- Quantum models --------------------------------------------------------
     if not args.skip_quantum:
         for model_name in ['Q1_QNN4EO', 'Q2_AngleSEL', 'Q3_DataReupload']:
             cmd = [
@@ -79,7 +79,7 @@ def main():
                 cmd += ['--batch-size', str(args.batch_size)]
             results[model_name] = run_cmd(cmd, model_name)
 
-    # ── Fusion models ─────────────────────────────────────────────────────────
+    # -- Fusion models ---------------------------------------------------------
     if not args.skip_fusion:
         for exp in ['E11', 'E12', 'E13', 'E14']:
             cmd = [
@@ -93,13 +93,13 @@ def main():
                 cmd += ['--batch-size', str(args.batch_size)]
             results[exp] = run_cmd(cmd, exp)
 
-    # ── Summary ───────────────────────────────────────────────────────────────
+    # -- Summary ---------------------------------------------------------------
     total_h = (time.time() - t_total) / 3600
     print(f"\n{'='*60}")
     print(f"  FINAL SUMMARY  (total: {total_h:.2f} h)")
     print(f"{'='*60}")
     for name, ok in results.items():
-        print(f"  {'✓' if ok else '✗'}  {name}")
+        print(f"  {'[OK]' if ok else '[FAIL]'}  {name}")
     print()
 
     # Check output files
@@ -129,9 +129,9 @@ def main():
             expected_files += 1
             if f.exists():
                 total_files += 1
-                print(f"  ✓  {f}")
+                print(f"  [OK]  {f}")
             else:
-                print(f"  ✗  {f}  (MISSING)")
+                print(f"  [FAIL]  {f}  (MISSING)")
 
     print(f"\n  Files: {total_files}/{expected_files}")
     print(f"{'='*60}\n")

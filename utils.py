@@ -21,7 +21,7 @@ from sklearn.metrics import (
 from shared_config import DEVICE, CHECKPOINT_DIR, METRICS_DIR, CM_DIR, REPORT_DIR
 
 
-# ── Training / evaluation loops ───────────────────────────────────────────────
+# -- Training / evaluation loops -----------------------------------------------
 
 def train_epoch(model, loader, optimizer, criterion, device=DEVICE,
                 cached_feats=None):
@@ -89,7 +89,7 @@ def eval_epoch(model, loader, criterion, device=DEVICE, cached_feats=None):
     )
 
 
-# ── Checkpointing ─────────────────────────────────────────────────────────────
+# -- Checkpointing -------------------------------------------------------------
 
 def save_checkpoint(model, optimizer, epoch, val_acc, model_name, dataset='RESISC45'):
     path = CHECKPOINT_DIR / f"{model_name}_{dataset}_best.pth"
@@ -108,7 +108,7 @@ def load_checkpoint(model, path, device=DEVICE):
     return ckpt.get('epoch', 0), ckpt.get('val_acc', 0.0)
 
 
-# ── CSV logger ────────────────────────────────────────────────────────────────
+# -- CSV logger ----------------------------------------------------------------
 
 class CSVLogger:
     def __init__(self, model_name: str, dataset: str = 'RESISC45'):
@@ -134,7 +134,7 @@ class CSVLogger:
         self._file.close()
 
 
-# ── Early stopping ────────────────────────────────────────────────────────────
+# -- Early stopping ------------------------------------------------------------
 
 class EarlyStopping:
     def __init__(self, patience: int = 8, min_delta: float = 0.001):
@@ -155,7 +155,7 @@ class EarlyStopping:
         return self.should_stop
 
 
-# ── Output generation ─────────────────────────────────────────────────────────
+# -- Output generation ---------------------------------------------------------
 
 def save_confusion_matrix(preds, labels, class_names, model_name,
                           dataset='RESISC45'):

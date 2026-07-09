@@ -18,7 +18,7 @@ from pennylane.qnn import TorchLayer
 from shared_config import N_QUBITS, NUM_CLASSES, QUANTUM_BACKEND, DIFF_METHOD
 
 
-# ── Quantum layer factories ───────────────────────────────────────────────────
+# -- Quantum layer factories ---------------------------------------------------
 
 def _make_sel_layer(n_qubits: int, n_layers: int) -> TorchLayer:
     """StronglyEntanglingLayers circuit wrapped as a TorchLayer."""
@@ -37,7 +37,7 @@ def _make_sel_layer(n_qubits: int, n_layers: int) -> TorchLayer:
 
 
 def _make_reupload_layer(n_qubits: int, n_layers: int) -> TorchLayer:
-    """Data reuploading circuit: AngleEmbed → ring-CNOT → RY/RZ (repeated)."""
+    """Data reuploading circuit: AngleEmbed -> ring-CNOT -> RY/RZ (repeated)."""
     nq = n_qubits
     nl = n_layers
 
@@ -61,13 +61,13 @@ def _make_reupload_layer(n_qubits: int, n_layers: int) -> TorchLayer:
     return TorchLayer(circuit, weight_shapes)
 
 
-# ── Q1: QNN4EO (ESA Baseline) ─────────────────────────────────────────────────
+# -- Q1: QNN4EO (ESA Baseline) -------------------------------------------------
 
 class Q1_QNN4EO(nn.Module):
     """
-    LeNet-style CNN encoder (3 conv layers + AdaptiveAvgPool) → 4 angles
-    → 4-qubit AngleEmbedding + StronglyEntanglingLayers (2 layers)
-    → Linear(4, 45)
+    LeNet-style CNN encoder (3 conv layers + AdaptiveAvgPool) -> 4 angles
+    -> 4-qubit AngleEmbedding + StronglyEntanglingLayers (2 layers)
+    -> Linear(4, 45)
 
     Params: ~1.3 K classical + 24 quantum
     """
@@ -80,7 +80,7 @@ class Q1_QNN4EO(nn.Module):
             nn.Conv2d(4, 8, kernel_size=3), nn.ReLU(),
             nn.Conv2d(8, 8, kernel_size=3), nn.ReLU(),
             nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),                   # → (B, 8)
+            nn.Flatten(),                   # -> (B, 8)
         )
         self.angle_fc   = nn.Linear(8, n_qubits)
         self.qlayer     = _make_sel_layer(n_qubits, n_layers)
@@ -93,13 +93,13 @@ class Q1_QNN4EO(nn.Module):
         return self.classifier(q_out)       # (B, 45)
 
 
-# ── Q2: AngleSEL (Quadrant PQC + Cross-Attention) ────────────────────────────
+# -- Q2: AngleSEL (Quadrant PQC + Cross-Attention) ----------------------------
 
 class Q2_AngleSEL(nn.Module):
     """
-    Split 64×64 image into 4 quadrants (32×32 each).
-    Shared CNN per quadrant → angles → shared 4Q PQC.
-    Cross-Attention: Q=quantum (4×4), K=V=CNN avg-pool (4×32) → (B, 16).
+    Split 64x64 image into 4 quadrants (32x32 each).
+    Shared CNN per quadrant -> angles -> shared 4Q PQC.
+    Cross-Attention: Q=quantum (4x4), K=V=CNN avg-pool (4x32) -> (B, 16).
     Linear(16, 45).
 
     Params: ~40 K classical + 24 quantum
@@ -108,13 +108,13 @@ class Q2_AngleSEL(nn.Module):
     def __init__(self, n_qubits: int = N_QUBITS, n_layers: int = 2,
                  n_classes: int = NUM_CLASSES, attn_dim: int = 16):
         super().__init__()
-        # Shared CNN applied to each 32×32 quadrant
+        # Shared CNN applied to each 32x32 quadrant
         self.quad_cnn = nn.Sequential(
             nn.Conv2d(3, 16, 3, padding=1), nn.BatchNorm2d(16), nn.ReLU(),
             nn.Conv2d(16, 32, 3, padding=1), nn.BatchNorm2d(32), nn.ReLU(),
-            nn.MaxPool2d(2),                # 32→16 spatial
+            nn.MaxPool2d(2),                # 32->16 spatial
         )
-        # After MaxPool: (B, 32, 16, 16) → flatten 8192
+        # After MaxPool: (B, 32, 16, 16) -> flatten 8192
         self.angle_fc = nn.Linear(32 * 16 * 16, n_qubits)
         self.qlayer   = _make_sel_layer(n_qubits, n_layers)
 
@@ -127,7 +127,7 @@ class Q2_AngleSEL(nn.Module):
         self.classifier = nn.Linear(attn_dim, n_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Split into 4 non-overlapping 32×32 quadrants
+        # Split into 4 non-overlapping 32x32 quadrants
         quads = [
             x[:, :, :32, :32],
             x[:, :, :32, 32:],
@@ -158,13 +158,13 @@ class Q2_AngleSEL(nn.Module):
         return self.classifier(out)  # (B, 45)
 
 
-# ── Q3: DataReupload ──────────────────────────────────────────────────────────
+# -- Q3: DataReupload ----------------------------------------------------------
 
 class Q3_DataReupload(nn.Module):
     """
-    CNN (3 conv + BN + AdaptiveAvgPool) → 4 angles (tanh-scaled to [-π, π])
-    → 4Q data-reuploading circuit (3 layers: AngleEmbed + ring-CNOT + RY/RZ)
-    → Linear(4, 45)
+    CNN (3 conv + BN + AdaptiveAvgPool) -> 4 angles (tanh-scaled to [-π, π])
+    -> 4Q data-reuploading circuit (3 layers: AngleEmbed + ring-CNOT + RY/RZ)
+    -> Linear(4, 45)
 
     Params: ~3.5 K classical + 24 quantum
     """
@@ -177,7 +177,7 @@ class Q3_DataReupload(nn.Module):
             nn.Conv2d(8, 16, 3), nn.BatchNorm2d(16), nn.ReLU(),
             nn.Conv2d(16, 16, 3), nn.BatchNorm2d(16), nn.ReLU(),
             nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),                             # → (B, 16)
+            nn.Flatten(),                             # -> (B, 16)
         )
         self.angle_fc   = nn.Linear(16, n_qubits)
         self.qlayer     = _make_reupload_layer(n_qubits, n_layers)

@@ -24,10 +24,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 def check(label, fn):
     try:
         result = fn()
-        print(f"  ✓  {label}: {result}")
+        print(f"  [OK]  {label}: {result}")
         return True
     except Exception as e:
-        print(f"  ✗  {label}: {e}")
+        print(f"  [FAIL]  {label}: {e}")
         return False
 
 
@@ -46,7 +46,7 @@ try:
     check("CUDA avail", lambda: str(torch.cuda.is_available()) + "  (expected False on Intel Iris Xe)")
     check("CPU threads", lambda: str(torch.get_num_threads()))
 except ImportError as e:
-    print(f"  ✗  PyTorch not found: {e}")
+    print(f"  [FAIL]  PyTorch not found: {e}")
     import_ok = False
 
 # 2. PennyLane
@@ -66,14 +66,14 @@ try:
             )
             return [qml.expval(qml.PauliZ(i)) for i in range(4)]
         out = test_circuit(qml.numpy.array([0.1, 0.2, 0.3, 0.4]))
-        print(f"  ✓  lightning.qubit (adjoint): circuit output shape = {len(out)}")
+        print(f"  [OK]  lightning.qubit (adjoint): circuit output shape = {len(out)}")
     except Exception as e:
-        print(f"  ⚠  lightning.qubit unavailable ({e})")
+        print(f"  [WARN]  lightning.qubit unavailable ({e})")
         print(f"       Install: pip install pennylane-lightning")
         print(f"       Falling back to default.qubit (slower)")
 
 except ImportError:
-    print("  ✗  PennyLane not found. Install: pip install pennylane pennylane-lightning")
+    print("  [FAIL]  PennyLane not found. Install: pip install pennylane pennylane-lightning")
 
 # 3. timm
 print("\n[3] timm (pretrained backbones)")
@@ -83,19 +83,19 @@ try:
 
     for mname in ['mobilevit_s', 'densenet121', 'resnet18']:
         ok = mname in timm.list_models(pretrained=True)
-        print(f"  {'✓' if ok else '✗'}  {mname} pretrained: {ok}")
+        print(f"  {'[OK]' if ok else '[FAIL]'}  {mname} pretrained: {ok}")
 
 except ImportError:
-    print("  ✗  timm not found. Install: pip install timm")
+    print("  [FAIL]  timm not found. Install: pip install timm")
 
 # 4. Other deps
 print("\n[4] Other dependencies")
 for pkg in ['sklearn', 'matplotlib', 'seaborn', 'numpy']:
     try:
         mod = __import__(pkg)
-        print(f"  ✓  {pkg}: {mod.__version__}")
+        print(f"  [OK]  {pkg}: {mod.__version__}")
     except Exception:
-        print(f"  ✗  {pkg}: not found — pip install scikit-learn matplotlib seaborn numpy")
+        print(f"  [FAIL]  {pkg}: not found — pip install scikit-learn matplotlib seaborn numpy")
 
 # 5. Dataset
 print("\n[5] Dataset")
@@ -105,16 +105,16 @@ if data_path.exists():
     classes = sorted(p.name for p in data_path.iterdir() if p.is_dir())
     n_imgs  = sum(1 for p in data_path.rglob('*')
                   if p.suffix.lower() in ('.jpg', '.jpeg', '.png'))
-    print(f"  ✓  Dataset found: {data_path}")
+    print(f"  [OK]  Dataset found: {data_path}")
     print(f"     Classes: {len(classes)} (expected 45)")
     print(f"     Images : {n_imgs} (expected ~31500)")
     if len(classes) != 45:
-        print(f"  ⚠  Expected 45 classes, found {len(classes)}")
+        print(f"  [WARN]  Expected 45 classes, found {len(classes)}")
         missing = set(RESISC45_CLASSES) - set(classes)
         if missing:
             print(f"     Missing: {missing}")
 else:
-    print(f"  ✗  Dataset NOT found at: {data_path}")
+    print(f"  [FAIL]  Dataset NOT found at: {data_path}")
     print(f"     Download NWPU-RESISC45 and unzip to:  {data_path}/")
     print(f"     Expected structure: {data_path}/airplane/*.jpg  etc.")
 
@@ -122,7 +122,7 @@ else:
 print("\n[6] Output directories")
 from shared_config import CHECKPOINT_DIR, METRICS_DIR, CM_DIR, REPORT_DIR, CACHE_DIR
 for d in [CHECKPOINT_DIR, METRICS_DIR, CM_DIR, REPORT_DIR, CACHE_DIR]:
-    status = '✓' if d.exists() else '✗'
+    status = '[OK]' if d.exists() else '[FAIL]'
     print(f"  {status}  {d}")
 
 # 7. Quick model forward pass (random data, no training)
@@ -142,11 +142,11 @@ if import_ok and 'torch' in dir():
             m   = ModelCls().to(DEVICE)
             out = m(x)
             elapsed = time.time() - t
-            print(f"  ✓  {name}: output={tuple(out.shape)}  ({elapsed:.2f}s)")
+            print(f"  [OK]  {name}: output={tuple(out.shape)}  ({elapsed:.2f}s)")
             del m
 
     except Exception as e:
-        print(f"  ✗  Quantum model smoke test failed: {e}")
+        print(f"  [FAIL]  Quantum model smoke test failed: {e}")
 
     try:
         # Only test fusion model IF timm is available
@@ -157,11 +157,11 @@ if import_ok and 'torch' in dir():
         m   = E14_DenseNet_MobileViT_Concat().to(DEVICE)
         out = m(x)
         elapsed = time.time() - t
-        print(f"  ✓  E14_DenseNet_MobileViT_Concat: output={tuple(out.shape)}  ({elapsed:.2f}s)")
+        print(f"  [OK]  E14_DenseNet_MobileViT_Concat: output={tuple(out.shape)}  ({elapsed:.2f}s)")
         del m
     except Exception as e:
-        print(f"  ⚠  Fusion model smoke test skipped/failed: {e}")
+        print(f"  [WARN]  Fusion model smoke test skipped/failed: {e}")
 
 print("\n" + "=" * 60)
-print("  Verification complete.  Fix any ✗ issues before training.")
+print("  Verification complete.  Fix any [FAIL] issues before training.")
 print("=" * 60 + "\n")

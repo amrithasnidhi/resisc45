@@ -1,12 +1,12 @@
 """
 Hybrid Quantum-Classical Fusion Models for RESISC-45.
 
-E11 – MobileViT-S (frozen) + ResNet-18+PQC  → Concatenation
-E12 – MobileViT-S (frozen) + ResNet-18+PQC  → Cross-Attention
-E13 – DenseNet-121 (frozen) + MobileViT-S+PQC → Multi-Head Cross-Attention
-E14 – DenseNet-121 (frozen) + MobileViT-S+PQC → Concatenation
+E11 – MobileViT-S (frozen) + ResNet-18+PQC  -> Concatenation
+E12 – MobileViT-S (frozen) + ResNet-18+PQC  -> Cross-Attention
+E13 – DenseNet-121 (frozen) + MobileViT-S+PQC -> Multi-Head Cross-Attention
+E14 – DenseNet-121 (frozen) + MobileViT-S+PQC -> Concatenation
 
-All models accept (B, 3, 64, 64) input (internally resized to 224×224 for
+All models accept (B, 3, 64, 64) input (internally resized to 224x224 for
 pretrained backbones) and output (B, 45) logits.
 
 Feature caching: frozen Branch-A backbones expose `extract_branch_a(x)` so
@@ -24,7 +24,7 @@ from shared_config import N_QUBITS, NUM_CLASSES, BACKBONE_SIZE
 
 
 def _resize(x: torch.Tensor, size: int = BACKBONE_SIZE) -> torch.Tensor:
-    """Bilinear upsample x to (size × size) if needed."""
+    """Bilinear upsample x to (size x size) if needed."""
     if x.shape[-1] == size and x.shape[-2] == size:
         return x
     return F.interpolate(x, size=(size, size), mode='bilinear', align_corners=False)
@@ -36,13 +36,13 @@ def _freeze(module: nn.Module) -> nn.Module:
     return module
 
 
-# ── E11: MobileViT-S + (ResNet-18 + 4Q PQC) – Concatenation ─────────────────
+# -- E11: MobileViT-S + (ResNet-18 + 4Q PQC) – Concatenation -----------------
 
 class E11_MobileViT_ResNet_Concat(nn.Module):
     """
-    Branch A: MobileViT-S (4.94 M, frozen)  → (B, 640)
-    Branch B: ResNet-18 + 4Q PQC            → (B, 4)
-    Fusion  : concat → [640+4=644] → MLP → 45
+    Branch A: MobileViT-S (4.94 M, frozen)  -> (B, 640)
+    Branch B: ResNet-18 + 4Q PQC            -> (B, 4)
+    Fusion  : concat -> [640+4=644] -> MLP -> 45
     """
 
     def __init__(self, n_qubits: int = N_QUBITS, n_layers: int = 2,
@@ -85,14 +85,14 @@ class E11_MobileViT_ResNet_Concat(nn.Module):
         return self.head(fused)
 
 
-# ── E12: MobileViT-S + (ResNet-18 + 4Q PQC) – Cross-Attention ───────────────
+# -- E12: MobileViT-S + (ResNet-18 + 4Q PQC) – Cross-Attention ---------------
 
 class E12_MobileViT_ResNet_CrossAttn(nn.Module):
     """
-    Branch A: MobileViT-S (frozen) → (B, 640)
-    Branch B: ResNet-18 + 4Q PQC  → (B, 4)
+    Branch A: MobileViT-S (frozen) -> (B, 640)
+    Branch B: ResNet-18 + 4Q PQC  -> (B, 4)
     Fusion  : Cross-Attention (Q=quantum, K=V=CNN, dim=128)
-              + residual + LayerNorm → Linear(128, 45)
+              + residual + LayerNorm -> Linear(128, 45)
     """
 
     def __init__(self, n_qubits: int = N_QUBITS, n_layers: int = 2,
@@ -109,7 +109,7 @@ class E12_MobileViT_ResNet_CrossAttn(nn.Module):
         self.quantum_fc = nn.Sequential(nn.Linear(512, n_qubits), nn.Tanh())
         self.qlayer     = _make_sel_layer(n_qubits, n_layers)
 
-        # Cross-attention projections (single query/key/value pair → gating)
+        # Cross-attention projections (single query/key/value pair -> gating)
         self.q_proj  = nn.Linear(n_qubits, attn_dim)
         self.k_proj  = nn.Linear(640,      attn_dim)
         self.v_proj  = nn.Linear(640,      attn_dim)
@@ -140,14 +140,14 @@ class E12_MobileViT_ResNet_CrossAttn(nn.Module):
         return self.classifier(out)
 
 
-# ── E13: DenseNet-121 + (MobileViT-S + 4Q PQC) – MH Cross-Attention ─────────
+# -- E13: DenseNet-121 + (MobileViT-S + 4Q PQC) – MH Cross-Attention ---------
 
 class E13_DenseNet_MobileViT_CrossAttn(nn.Module):
     """
-    Branch A: DenseNet-121 (6.96 M, frozen) → (B, 1024)
-    Branch B: MobileViT-S + 4Q PQC         → (B, 4)
+    Branch A: DenseNet-121 (6.96 M, frozen) -> (B, 1024)
+    Branch B: MobileViT-S + 4Q PQC         -> (B, 4)
     Fusion  : Multi-Head Cross-Attention (4 heads, dim=256)
-              + residual + LayerNorm → Linear(256, 45)
+              + residual + LayerNorm -> Linear(256, 45)
     """
 
     def __init__(self, n_qubits: int = N_QUBITS, n_layers: int = 2,
@@ -193,13 +193,13 @@ class E13_DenseNet_MobileViT_CrossAttn(nn.Module):
         return self.classifier(out)
 
 
-# ── E14: DenseNet-121 + (MobileViT-S + 4Q PQC) – Concatenation ──────────────
+# -- E14: DenseNet-121 + (MobileViT-S + 4Q PQC) – Concatenation --------------
 
 class E14_DenseNet_MobileViT_Concat(nn.Module):
     """
-    Branch A: DenseNet-121 (frozen) → (B, 1024)
-    Branch B: MobileViT-S + 4Q PQC → (B, 4)
-    Fusion  : concat [1024+4=1028] → MLP → 45
+    Branch A: DenseNet-121 (frozen) -> (B, 1024)
+    Branch B: MobileViT-S + 4Q PQC -> (B, 4)
+    Fusion  : concat [1024+4=1028] -> MLP -> 45
     """
 
     def __init__(self, n_qubits: int = N_QUBITS, n_layers: int = 2,
