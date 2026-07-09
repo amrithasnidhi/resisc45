@@ -17,6 +17,7 @@ import argparse
 import sys
 import time
 import random
+import ctypes
 from pathlib import Path
 
 import numpy as np
@@ -25,6 +26,13 @@ import torch.nn as nn
 
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).parent))
+
+# Prevent Windows from sleeping during training
+# ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED
+try:
+    ctypes.windll.kernel32.SetThreadExecutionState(0x80000003)
+except Exception:
+    pass
 
 from shared_config import (
     DEVICE, DATA_DIR, IMG_SIZE, QUANTUM_BATCH_SIZE,
@@ -206,4 +214,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    finally:
+        # Re-enable sleep after training completes or errors
+        try:
+            ctypes.windll.kernel32.SetThreadExecutionState(0x80000000)
+        except Exception:
+            pass

@@ -20,6 +20,7 @@ import argparse
 import sys
 import time
 import random
+import ctypes
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +28,12 @@ import torch
 import torch.nn as nn
 
 sys.path.insert(0, str(Path(__file__).parent))
+
+# Prevent Windows from sleeping during training
+try:
+    ctypes.windll.kernel32.SetThreadExecutionState(0x80000003)
+except Exception:
+    pass
 
 from shared_config import (
     DEVICE, DATA_DIR, IMG_SIZE, FUSION_BATCH_SIZE, SEED,
@@ -348,4 +355,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    finally:
+        try:
+            ctypes.windll.kernel32.SetThreadExecutionState(0x80000000)
+        except Exception:
+            pass
