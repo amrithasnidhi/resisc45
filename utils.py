@@ -113,7 +113,7 @@ def load_checkpoint(model, path, device=DEVICE):
 class CSVLogger:
     def __init__(self, model_name: str, dataset: str = 'RESISC45'):
         self.path = METRICS_DIR / f"{model_name}_{dataset}_training_log.csv"
-        self._file   = open(self.path, 'w', newline='')
+        self._file   = open(self.path, 'w', newline='', encoding='utf-8')
         self._writer = csv.writer(self._file)
         self._writer.writerow(
             ['epoch', 'stage', 'train_loss', 'train_acc',
@@ -178,7 +178,7 @@ def save_classification_report(preds, labels, class_names, model_name,
     report = classification_report(labels, preds, target_names=class_names,
                                    digits=4)
     out_path = METRICS_DIR / f"{model_name}_{dataset}_classification_report.txt"
-    out_path.write_text(report)
+    out_path.write_text(report, encoding='utf-8')
     return out_path
 
 
@@ -246,7 +246,7 @@ def save_model_report(model_name: str, dataset: str, metrics: dict,
 - Confusion matrix: `results/confusion_matrices/{model_name}_{dataset}_cm.png`
 """
     out_path = REPORT_DIR / f"{model_name}_{dataset}_report.md"
-    out_path.write_text(content)
+    out_path.write_text(content, encoding='utf-8')
     return out_path
 
 
