@@ -157,7 +157,7 @@ def run_stage(model, stage, train_loader, val_loader,
     set_stage(model, stage, '')
     optimizer = make_optimizer(model, lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='max', factor=0.5, patience=5, verbose=False
+        optimizer, mode='max', factor=0.5, patience=5
     )
     early_stop  = EarlyStopping(patience=early_patience)
     best_val    = 0.0
