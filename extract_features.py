@@ -18,6 +18,13 @@ Or cache all at once:
 import argparse
 import sys
 import time
+import ctypes
+
+# Prevent Windows sleep during long feature extraction
+try:
+    ctypes.windll.kernel32.SetThreadExecutionState(0x80000003)
+except Exception:
+    pass
 from pathlib import Path
 
 import torch
