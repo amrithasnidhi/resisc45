@@ -1,0 +1,51 @@
+                       precision    recall  f1-score   support
+
+             airplane     0.1649    0.4528    0.2418       106
+              airport     0.0476    0.0316    0.0380        95
+     baseball_diamond     0.1173    0.2255    0.1544       102
+     basketball_court     0.0000    0.0000    0.0000       102
+                beach     0.1170    0.2151    0.1515        93
+               bridge     0.1053    0.1935    0.1364        93
+            chaparral     0.2500    0.2348    0.2422       115
+               church     0.1500    0.0849    0.1084       106
+    circular_farmland     0.2609    0.0526    0.0876       114
+                cloud     0.2736    0.2283    0.2489       127
+      commercial_area     0.0000    0.0000    0.0000        92
+    dense_residential     0.1334    0.9048    0.2326       105
+               desert     0.6358    0.9035    0.7464       114
+               forest     0.2193    0.2475    0.2326       101
+              freeway     0.0556    0.0093    0.0160       107
+          golf_course     0.2520    0.2672    0.2594       116
+   ground_track_field     0.0933    0.1636    0.1188       110
+               harbor     0.3151    0.1983    0.2434       116
+      industrial_area     0.0000    0.0000    0.0000       114
+         intersection     0.0488    0.0167    0.0248       120
+               island     0.3694    0.8367    0.5125        98
+                 lake     0.2190    0.2233    0.2212       103
+               meadow     0.4175    0.8438    0.5586        96
+   medium_residential     0.1345    0.3232    0.1899        99
+     mobile_home_park     0.0000    0.0000    0.0000        88
+             mountain     0.0000    0.0000    0.0000       110
+             overpass     0.2000    0.0095    0.0182       105
+               palace     0.0000    0.0000    0.0000        92
+          parking_lot     0.1229    0.2136    0.1560       103
+              railway     0.1481    0.0333    0.0544       120
+      railway_station     0.0396    0.0404    0.0400        99
+ rectangular_farmland     0.1429    0.0095    0.0179       105
+                river     0.0000    0.0000    0.0000       112
+           roundabout     0.0000    0.0000    0.0000       120
+               runway     0.0882    0.0526    0.0659       114
+              sea_ice     0.1594    0.1028    0.1250       107
+                 ship     0.0882    0.1562    0.1128        96
+             snowberg     0.1415    0.4206    0.2118       107
+   sparse_residential     0.0526    0.0098    0.0165       102
+              stadium     0.0870    0.0220    0.0351        91
+         storage_tank     0.1751    0.2793    0.2153       111
+         tennis_court     0.0000    0.0000    0.0000       102
+              terrace     0.0857    0.0309    0.0455        97
+thermal_power_station     0.0000    0.0000    0.0000       100
+              wetland     0.1313    0.1300    0.1307       100
+
+             accuracy                         0.1816      4725
+            macro avg     0.1343    0.1815    0.1336      4725
+         weighted avg     0.1371    0.1816    0.1351      4725
