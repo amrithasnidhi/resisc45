@@ -246,6 +246,14 @@ def main():
         batch_size = args.batch_size,
         seed       = args.seed,
     )
+
+    # Cached Branch-A features are indexed sequentially (position 0..N).
+    # shuffle=True would misalign feat_a to images, so we disable it.
+    if use_cache:
+        from torch.utils.data import DataLoader as _DL
+        train_loader = _DL(train_loader.dataset, batch_size=args.batch_size,
+                           shuffle=False, num_workers=0, pin_memory=False)
+
     class_names = get_class_names(args.data_dir)
     print(f"Train: {len(train_loader.dataset)} | "
           f"Val: {len(val_loader.dataset)} | "
